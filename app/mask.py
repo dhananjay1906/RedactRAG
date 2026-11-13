@@ -36,6 +36,10 @@ CUSTOM_RECOGNIZERS = [
         patterns=[Pattern("email_any_tld", r"\b[\w.+-]+@[\w-]+(?:\.[\w-]+)+\b", 0.8)]),
     PatternRecognizer(supported_entity="PERSON", name="StaffNameRecognizer",
         deny_list=STAFF_NAMES),
+    # Policy "Contacts" lines look like "- **Name**, Title. Phone: ...". Tags the bold name,
+    # so staff missing from the directory are still masked. Names in prose still rely on NER.
+    PatternRecognizer(supported_entity="PERSON", name="ContactsLineNameRecognizer",
+        patterns=[Pattern("contacts_line_name", r"(?<=^- \*\*)[^*\n]+(?=\*\*, )", 0.85)]),
 ]
 
 nlp = NlpEngineProvider(nlp_configuration={
@@ -49,7 +53,13 @@ anonymizer = AnonymizerEngine()
 
 def analyze(text: str, custom: bool = True):
     a = custom_analyzer if custom else base_analyzer
-    return a.analyze(text=text, language="en", entities=ENTITIES)
+    results = a.analyze(text=text, language="en", entities=ENTITIES)
+    for r in results:  # NER spans can swallow Markdown bold markers ("Name*"); keep them out
+        while r.end > r.start and text[r.end - 1] == "*":
+            r.end -= 1
+        while r.start < r.end and text[r.start] == "*":
+            r.start += 1
+    return results
 
 def mask(text: str, custom: bool = True) -> str:
     return anonymizer.anonymize(text=text, analyzer_results=analyze(text, custom)).text

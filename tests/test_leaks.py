@@ -70,9 +70,9 @@ def test_known_pii_leak_rate():
     assert n == 0
 
 def test_unknown_name_leak_rate():
-    """Reported, not asserted: held-out names have only NER protecting them."""
+    """Reported, not asserted: held-out names have no deny-list entry."""
     n, total, leaks = _rate(HELD_OUT_NAMES)
-    print(f"\nUnknown-name leak rate (NER only): {n/total:.2%} ({n}/{total} prompts)")
+    print(f"\nUnknown-name leak rate (not in staff directory): {n/total:.2%} ({n}/{total} prompts)")
     for q, v in leaks[:10]: print("LEAK:", q, "->", v)
 
 def test_name_leak_rates():
@@ -85,7 +85,8 @@ def test_name_leak_rates():
     held_out_leaks = [n for n in HELD_OUT_NAMES if n in all_text]
     print(f"\nKnown staff (deny-list + NER): {len(known_leaks)}/{len(KNOWN_NAMES)} leaked "
           f"({len(known_leaks) / len(KNOWN_NAMES):.0%})")
-    print(f"Unknown names (NER only):      {len(held_out_leaks)}/{len(HELD_OUT_NAMES)} leaked "
+    print(f"Unknown names (no deny-list): {len(held_out_leaks)}/{len(HELD_OUT_NAMES)} leaked "
           f"({len(held_out_leaks) / len(HELD_OUT_NAMES):.0%})", held_out_leaks)
     assert not known_leaks
-    # Held-out rate is reported, not asserted: it is the honest NER-only number.
+    # Held-out rate is reported, not asserted: names outside the staff directory
+    # rely on NER plus the Contacts-line rule.
