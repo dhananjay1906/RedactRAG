@@ -4,6 +4,7 @@ from pathlib import Path
 from app.mask import analyze, mask
 
 custom = "--no-custom" not in sys.argv
+folder = sys.argv[sys.argv.index("--dir") + 1] if "--dir" in sys.argv else "data/records"
 LABEL = {"PERSON": "PERSON", "PHONE": "PHONE_NUMBER", "EMAIL": "EMAIL_ADDRESS",
          "CASE_NUMBER": "CASE_NUMBER", "BOOKING_ID": "BOOKING_ID"}
 KEEP = ["10 sick days", "48 hours", "weekly", "3 days", "evening program"]
@@ -16,11 +17,11 @@ def fragments(typ, val):
     if typ == "BOOKING_ID": frags.append(val[2:])
     return frags
 
-manifest = json.loads(Path("data/records/manifest.json").read_text(encoding="utf-8"))
+manifest = json.loads(Path(folder, "manifest.json").read_text(encoding="utf-8"))
 correct, leaked, total, overmask, missed_phones = Counter(), Counter(), Counter(), 0, []
 
 for d in manifest:
-    text = Path("data/records", d["doc"]).read_text(encoding="utf-8")
+    text = Path(folder, d["doc"]).read_text(encoding="utf-8")
     results = analyze(text, custom)
     masked = mask(text, custom)
     for typ, val in d["pii"].items():
