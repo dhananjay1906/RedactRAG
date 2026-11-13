@@ -4,3 +4,4 @@ __pycache__/
 data/records/
 data/holdout/
 data/holdout2/
+.claude/
