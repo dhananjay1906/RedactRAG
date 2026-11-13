@@ -36,7 +36,7 @@ The expected chunk is not in the top 8.
 
 **0.00% (0/148).** Was 20.95% (31/148) before the fix. All leaks were 2 policy contact names that spaCy NER did not tag as PERSON:
 `Wilhelmina Strathcona-Ibe` (records-requests.md) and `Lucía Fernández-Hobart` (check-in-and-reporting.md).
-Policy manifest: PERSON 2/21 left in DB; PHONE, EMAIL, CASE_NUMBER 0. All 120 user-typed PII questions masked.
+Before the fix, policy manifest: PERSON 2/21 left in DB; PHONE, EMAIL, CASE_NUMBER 0. All 120 user-typed PII questions masked.
 
 ### Accuracy (`tests/test_accuracy.py`, 28 Haiku calls)
 
