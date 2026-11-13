@@ -7,10 +7,10 @@ from presidio_anonymizer import AnonymizerEngine
 ENTITIES = ["PERSON", "PHONE_NUMBER", "EMAIL_ADDRESS", "US_SSN", "CREDIT_CARD",
             "CASE_NUMBER", "BOOKING_ID"]
 
-# Staff names from the policy "Contacts" sections; spaCy NER misses some of them
-_MANIFEST = Path(__file__).parent.parent / "data" / "policies" / "manifest.json"
-STAFF_NAMES = [d["pii"]["PERSON"] for d in json.loads(_MANIFEST.read_text(encoding="utf-8"))
-               if "PERSON" in d["pii"]]
+# Known staff names (stand-in for the HR staff directory); spaCy NER misses some of them.
+# Must NOT be loaded from data/policies/manifest.json: that file is the leak test's answer key.
+_STAFF_DIRECTORY = Path(__file__).parent.parent / "config" / "staff_directory.json"
+STAFF_NAMES = json.loads(_STAFF_DIRECTORY.read_text(encoding="utf-8"))
 
 CUSTOM_RECOGNIZERS = [
     PatternRecognizer(supported_entity="CASE_NUMBER",
