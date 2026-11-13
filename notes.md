@@ -203,6 +203,20 @@ model, and both models score 100/100 on names in prose in `data/records`. `trf` 
 chunks: the only failure was the retrieval miss above, and the agent answered "I don't know"
 instead of guessing.
 
+## Cost of privacy (`scripts/ablation.py`, masked vs. raw, 64 Haiku calls)
+
+`python -m app.ingest --raw` writes unmasked chunks to `chunks_raw` (never `chunks`); `ask(q, masked=False)`
+reads it and skips masking the question. Same 32 cases and pass rule as `tests/test_accuracy.py`.
+
+| Pipeline | Accuracy |
+|----------|----------|
+| Masked (default) | **32/32** |
+| Raw (no masking) | **32/32** |
+
+Questions where they differ: 0. Masking costs nothing on these questions, but none of the 32 needs a
+masked value to answer (they ask about fees, deadlines and limits). The real cost shows on contact
+questions (see the tradeoff below), which this eval set does not score.
+
 ## Known tradeoff: masked contacts can't be answered
 
 Seen in `assets/mcp-demo.png`: asked who to contact about a records request, the system answers

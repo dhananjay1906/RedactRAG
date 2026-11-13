@@ -18,6 +18,11 @@ def test_search_is_masked():
     leaked = [v for r in rows for v in POLICY_PII if v in r["content"]]
     assert not leaked, leaked
 
+def test_api_cannot_switch_off_masking():
+    # "masked" is not a declared parameter, so FastAPI ignores it and the masked table is used.
+    rows = client.get("/search", params={"q": "records request contact", "k": 20, "masked": "false"}).json()
+    assert rows and not [v for r in rows for v in POLICY_PII if v in r["content"]]
+
 def test_search_k_is_capped():
     assert client.get("/search", params={"q": "x", "k": 1000}).status_code == 422
     assert client.get("/search", params={"q": "x", "k": 0}).status_code == 422

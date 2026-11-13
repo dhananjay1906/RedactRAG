@@ -9,10 +9,11 @@ from app.search import search
 load_dotenv()
 client = Anthropic()
 MODEL = os.environ["CLAUDE_MODEL"]
-SENT_PROMPTS: list[str] = []   # every prompt sent to Claude, used by the leak test
+SENT_PROMPTS: list[str] = []   # every masked prompt sent to Claude, used by the leak test
 
 class State(TypedDict, total=False):
     question: str
+    masked: bool              # False only for the cost-of-privacy ablation
     masked_question: str
     chunks: list[dict]
     prompt: str
@@ -20,17 +21,20 @@ class State(TypedDict, total=False):
     citations: list[str]
 
 def mask_question(s):
+    if not s.get("masked", True):
+        return {"masked_question": s["question"]}   # ablation: question sent as typed
     return {"masked_question": mask(s["question"])}
 
 def retrieve(s):
-    return {"chunks": search(s["masked_question"], k=5)}
+    return {"chunks": search(s["masked_question"], k=5, masked=s.get("masked", True))}
 
 def build_prompt(s):
     context = "\n\n".join(f"[{c['doc']}]\n{c['content']}" for c in s["chunks"])
     prompt = ("Answer using ONLY the sources below. Cite each fact like [file.md]. "
               "If the answer isn't in the sources, say \"I don't know.\"\n\n"
               f"SOURCES:\n{context}\n\nQUESTION: {s['masked_question']}")
-    SENT_PROMPTS.append(prompt)
+    if s.get("masked", True):
+        SENT_PROMPTS.append(prompt)
     return {"prompt": prompt}
 
 def generate(s):
@@ -60,8 +64,8 @@ g.add_edge("generate", "check_citations")
 g.add_edge("check_citations", END)
 agent = g.compile()
 
-def ask(question: str) -> dict:
-    return agent.invoke({"question": question})
+def ask(question: str, masked: bool = True) -> dict:
+    return agent.invoke({"question": question, "masked": masked})
 
 def prepare(question: str) -> str:
     s = {"question": question}

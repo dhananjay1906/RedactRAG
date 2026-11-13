@@ -1,11 +1,12 @@
 import hashlib
 import re
+import sys
 from pathlib import Path
 import psycopg
 from pgvector.psycopg import register_vector
 from pypdf import PdfReader
 from app.mask import mask
-from app.search import model, DB_URL
+from app.search import model, DB_URL, MASKED_TABLE, RAW_TABLE
 
 SOURCE_DIRS = [Path("data/policies"), Path("docs")]
 
@@ -69,19 +70,21 @@ def title_of(text: str, path: Path) -> str:
     m = re.search(r"^# +(.+)$", text, flags=re.MULTILINE)
     return m.group(1).strip() if m else path.stem.replace("-", " ").title()
 
-def main():
+def main(raw: bool = False):
+    """raw=True (ablation only) skips masking and writes to chunks_raw, never to chunks."""
+    table = RAW_TABLE if raw else MASKED_TABLE
     with psycopg.connect(DB_URL, autocommit=True) as conn:
         conn.execute("CREATE EXTENSION IF NOT EXISTS vector")
         register_vector(conn)
-        conn.execute("""CREATE TABLE IF NOT EXISTS chunks (
+        conn.execute(f"""CREATE TABLE IF NOT EXISTS {table} (
             id serial PRIMARY KEY, doc text, page int, content text, embedding vector(384))""")
-        conn.execute("TRUNCATE chunks")
+        conn.execute(f"TRUNCATE {table}")
         seen = set()
         paths = sorted(p for d in SOURCE_DIRS if d.exists()
                        for p in d.iterdir() if p.suffix in (".md", ".pdf"))
         for path in paths:
-            for page, raw in read_pages(path):
-                masked = mask(raw)                                 # mask FIRST
+            for page, text in read_pages(path):
+                masked = text if raw else mask(text)               # mask FIRST (unless --raw)
                 title = title_of(masked, path)
                 for heading, body in sections(masked):             # then split and chunk
                     header = f"{title} > {heading}" if heading else title
@@ -92,9 +95,9 @@ def main():
                             continue
                         seen.add(h)
                         conn.execute(
-                            "INSERT INTO chunks (doc, page, content, embedding) VALUES (%s, %s, %s, %s)",
+                            f"INSERT INTO {table} (doc, page, content, embedding) VALUES (%s, %s, %s, %s)",
                             (path.name, page, content, model.encode(content)))
-    print("Ingest done")
+    print(f"Ingest done ({table})")
 
 if __name__ == "__main__":
-    main()
+    main(raw="--raw" in sys.argv)
