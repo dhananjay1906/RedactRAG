@@ -219,23 +219,25 @@ questions (see the tradeoff below), which this eval set does not score.
 
 ## Number check in `check_citations`
 
-Every number in the answer (digits only, citations stripped) must appear in the cited file's retrieved
-chunks, or the answer becomes "I don't know - the sources don't support that answer."
-Free tests: `tests/test_citations.py` (3). Accuracy after adding it: **32/32** (no real answer rejected).
+Every number in the answer (citations stripped) must appear in the cited file's retrieved chunks, or the
+answer becomes "I don't know - the sources don't support that answer."
 
-Probing the rule with source text "The fee is $12 per test. Results are kept for 120 days.":
+First version compared digit substrings. Probing it with "The fee is $12 per test. Records are kept for
+120 days." showed it was loose and strict in the wrong places:
 
-| Answer | Result | Correct? |
-|--------|--------|----------|
-| `$12.00` | rejected | false reject: `12.00` is not a substring |
-| `1,200 days` | rejected | false reject on formatting (here the value is also wrong) |
-| `$1`, `$2`, `$20` | **passed** | wrong: substring match finds them inside `12` / `120` |
-| `twelve dollars` | **passed** | words are not checked at all |
+| Answer | Substring version | Current version |
+|--------|-------------------|-----------------|
+| `$1`, `$2`, `$20` (wrong) | passed (found inside `12`/`120`) | **rejected** |
+| `twenty dollars` (wrong) | passed (words not checked) | **rejected** |
+| `twelve dollars` (right) | passed (by accident) | passed |
+| `$12.00` (right) | rejected | **passed** |
+| `1,200` vs source `1200` (right) | rejected | **passed** |
 
-Tradeoff: the substring test is loose enough to let wrong small numbers through and strict enough to
-reject harmless reformatting. A better version would match whole numbers (`\b12\b`), normalise
-`1,200` -> `1200` and `12.00` -> `12` on both sides, and optionally map number words to digits.
-Not changed yet; on the current 32 questions it costs nothing and catches invented numbers like `$50`.
+Current version: `_numbers()` in `app/agent.py` extracts a set of normalised whole numbers from both
+answer and sources (`1,200` -> `1200`, `12.00` -> `12`, `12.50` -> `12.5`, `007` -> `7`, number words
+`two`-`ninety` incl. `twenty-five`), then checks set membership instead of substrings. `one` is not
+converted because it is mostly a pronoun. Free tests: `tests/test_citations.py` (6). Accuracy with the
+current check: **32/32**. Remaining gaps: ordinals (`first`), `hundred`/`thousand` words, and fractions.
 
 ## Known tradeoff: masked contacts can't be answered
 

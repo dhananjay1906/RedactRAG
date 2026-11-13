@@ -44,6 +44,29 @@ def generate(s):
     # Haiku 5.5 thinks by default, so content[0] can be a ThinkingBlock; take the text block.
     return {"answer": next((b.text for b in msg.content if b.type == "text"), "")}
 
+# Number words -> digits. "one" is left out: it is mostly a pronoun ("at least one of which").
+_ONES = ["", "", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven",
+         "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"]
+_TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
+_WORDS = {w: i for i, w in enumerate(_ONES) if w} | {w: i * 10 for i, w in enumerate(_TENS) if w}
+_NUM_RE = re.compile(r"\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?")
+_WORD_RE = re.compile(r"\b(" + "|".join(_TENS[2:]) + r")-(" + "|".join(_ONES[2:10]) + r")\b|\b("
+                      + "|".join(sorted(_WORDS, key=len, reverse=True)) + r")\b", re.IGNORECASE)
+
+def _numbers(text: str) -> set[str]:
+    """Whole numbers in text, normalised so formatting doesn't matter:
+    '1,200' -> '1200', '12.00' -> '12', '12.50' -> '12.5', '007' -> '7', 'twenty-five' -> '25'."""
+    out = set()
+    for m in _NUM_RE.findall(text):
+        n = m.replace(",", "")
+        if "." in n:
+            n = n.rstrip("0").rstrip(".")
+        whole, _, frac = n.partition(".")
+        out.add(str(int(whole)) + ("." + frac if frac else ""))
+    for tens, ones, word in _WORD_RE.findall(text):
+        out.add(str(_WORDS[tens.lower()] + _WORDS[ones.lower()]) if tens else str(_WORDS[word.lower()]))
+    return out
+
 def check_citations(s):
     cited = set(re.findall(r"\[([\w\-]+\.md)\]", s["answer"]))
     retrieved = {c["doc"] for c in s["chunks"]}
@@ -51,8 +74,7 @@ def check_citations(s):
         return {"answer": "I don't know - no supporting source found.", "citations": []}
     source_text = " ".join(c["content"] for c in s["chunks"] if c["doc"] in cited)
     answer_text = re.sub(r"\[[\w\-]+\.md\]", "", s["answer"])
-    numbers = set(re.findall(r"\d+(?:\.\d+)?", answer_text))
-    unsupported = [n for n in numbers if n not in source_text]
+    unsupported = _numbers(answer_text) - _numbers(source_text)
     if unsupported:
         return {"answer": "I don't know - the sources don't support that answer.", "citations": []}
     return {"citations": sorted(cited)}
