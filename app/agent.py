@@ -62,3 +62,10 @@ agent = g.compile()
 
 def ask(question: str) -> dict:
     return agent.invoke({"question": question})
+
+def prepare(question: str) -> str:
+    s = {"question": question}
+    s |= mask_question(s)
+    s |= retrieve(s)
+    s |= build_prompt(s)
+    return s["prompt"]
