@@ -79,6 +79,28 @@ never says "outside employment", only the `## Outside Employment` heading does, 
 cut the heading off. With the heading on every chunk it ranks 3rd (behind `remote-work.md` and
 `leave-and-sick-time.md`), so it is a hit@3 but still not a hit@1.
 
+Why it is still not a hit@1 (the only hit@1 miss):
+
+| Rank | Chunk | Distance |
+|------|-------|----------|
+| 1 | `remote-work.md` > Schedule: "employees may work remotely up to 2 days per week" | 0.448 |
+| 2 | `leave-and-sick-time.md` > Purpose and Scope, 220-char tail: "...urs per week ... fewer than 20 hours per week" | 0.482 |
+| 3 | `code-of-conduct.md` > Outside Employment (the answer) | 0.506 |
+
+The answer is `code-of-conduct.md` line 25 ("exceeds 20 hours per week", char 360 of a 454-char section),
+stored whole with its heading, so chunking is not cutting it. The cause is word overlap: the only
+distinctive term, "outside employment", is in the heading; the rest of the question ("maximum number of
+hours per week", "employee may work") matches the remote-work schedule and the leave fragment better.
+The answer chunk is mostly about approval, Form E-2 and conflicts, with the limit as one clause, and
+MiniLM averages the whole chunk into one vector. Rank 2 is partly a chunker artifact: a short tail
+piece that starts mid-word and is dense in "hours per week".
+
+Chunk-size sweep (all 32 questions, in memory): 300/60 ranks it 2nd; 500/100, 800/150, 1200/200 and
+whole sections rank it 3rd. hit@1 stays 31/32 at every size, so this is not a chunk-size problem.
+Not fixed: rewording the eval question would tune the test to the system. Real fixes are hybrid
+keyword + vector search (BM25 would match "outside employment" in the heading), a cross-encoder
+reranker, or a stronger embedding model.
+
 ### End-to-end leak rate (`tests/test_leaks.py`, 182 prompts, no API calls)
 
 Prompts: 32 eval questions + 120 questions with user-typed PII + 30 "who do I contact" questions
