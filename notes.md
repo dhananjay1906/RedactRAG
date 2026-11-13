@@ -46,6 +46,22 @@ By format:
 Takeaway: the in-distribution 100/100 for CASE_NUMBER and BOOKING_ID does not carry over to new formats.
 Case numbers only look safe because the phone rule over-matches; booking IDs leak almost every time.
 
+**After widening the recognizers** (`app/mask.py`; held-out docs untouched):
+
+| Type        | Before: correct / leaked | After: correct / leaked |
+|-------------|--------------------------|-------------------------|
+| CASE_NUMBER | 10/30 / 0                | **30/30 / 0**           |
+| BOOKING_ID  | 0/30 / 28                | **30/30 / 0**           |
+
+Changes: `PRB` and `BK` accept `-`, a space or nothing after the prefix; a bare `YYYY-NNNNNN` or
+7-digit number counts only right after a label (`Case #`, `case`, `docket`, `Booking:`, `booking`),
+via lookbehinds so the label is not masked. A bare 7-digit number with no label is still left alone.
+`data/records` stays 100/100 with 0 leaks, over-masked policy phrases 0, and every other metric is unchanged.
+
+Caveat: these 30 docs were used to pick the fix, so they are now a dev set, not a held-out set.
+30/30 shows the fix works on these formats, not that it generalises. An honest generalisation number
+needs a fresh set of formats (e.g. `Case No. 2024/001234`, `Booking ID 1234567`) scored before any tuning.
+
 ### DB leak count
 
 `SELECT count(*) FROM chunks WHERE content ~ 'PRB-|@|BK[0-9]{7}'`: 14 before the email fix, **0** after.
