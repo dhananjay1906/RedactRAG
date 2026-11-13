@@ -34,7 +34,7 @@ The expected chunk is not in the top 8.
 
 ### End-to-end leak rate (`tests/test_leaks.py`, 148 prompts, no API calls)
 
-**20.95% (31/148) - FAILING.** All leaks are 2 policy contact names that spaCy NER did not tag as PERSON:
+**0.00% (0/148).** Was 20.95% (31/148) before the fix. All leaks were 2 policy contact names that spaCy NER did not tag as PERSON:
 `Wilhelmina Strathcona-Ibe` (records-requests.md) and `Lucía Fernández-Hobart` (check-in-and-reporting.md).
 Policy manifest: PERSON 2/21 left in DB; PHONE, EMAIL, CASE_NUMBER 0. All 120 user-typed PII questions masked.
 
@@ -45,4 +45,4 @@ Policy manifest: PERSON 2/21 left in DB; PHONE, EMAIL, CASE_NUMBER 0. All 120 us
 ## Bugs found
 
 - Found: Presidio skipped non-standard email domains; fixed with a custom recognizer.
-- Found: spaCy NER misses some names in "Contacts" bullet lists (2/21 policy contacts). Not fixed yet.
+- Found: spaCy NER misses some names in "Contacts" bullet lists (2/21 policy contacts). Fixed with a staff-name deny-list recognizer.

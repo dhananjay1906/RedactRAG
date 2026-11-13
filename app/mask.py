@@ -1,9 +1,16 @@
+import json
+from pathlib import Path
 from presidio_analyzer import AnalyzerEngine, PatternRecognizer, Pattern
 from presidio_analyzer.nlp_engine import NlpEngineProvider
 from presidio_anonymizer import AnonymizerEngine
 
 ENTITIES = ["PERSON", "PHONE_NUMBER", "EMAIL_ADDRESS", "US_SSN", "CREDIT_CARD",
             "CASE_NUMBER", "BOOKING_ID"]
+
+# Staff names from the policy "Contacts" sections; spaCy NER misses some of them
+_MANIFEST = Path(__file__).parent.parent / "data" / "policies" / "manifest.json"
+STAFF_NAMES = [d["pii"]["PERSON"] for d in json.loads(_MANIFEST.read_text(encoding="utf-8"))
+               if "PERSON" in d["pii"]]
 
 CUSTOM_RECOGNIZERS = [
     PatternRecognizer(supported_entity="CASE_NUMBER",
@@ -19,6 +26,8 @@ CUSTOM_RECOGNIZERS = [
     # Presidio's built-in email recognizer rejects non-real TLDs (e.g. .example)
     PatternRecognizer(supported_entity="EMAIL_ADDRESS", name="AnyTldEmailRecognizer",
         patterns=[Pattern("email_any_tld", r"\b[\w.+-]+@[\w-]+(?:\.[\w-]+)+\b", 0.8)]),
+    PatternRecognizer(supported_entity="PERSON", name="StaffNameRecognizer",
+        deny_list=STAFF_NAMES),
 ]
 
 nlp = NlpEngineProvider(nlp_configuration={
