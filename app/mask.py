@@ -13,11 +13,19 @@ _STAFF_DIRECTORY = Path(__file__).parent.parent / "config" / "staff_directory.js
 STAFF_NAMES = json.loads(_STAFF_DIRECTORY.read_text(encoding="utf-8"))
 
 CUSTOM_RECOGNIZERS = [
+    # Presidio compiles these case-insensitively, so "prb-..." and "bk..." also match.
+    # Separator after the prefix may be "-", a space or nothing. A bare number is only
+    # matched right after a label ("Case #", "Booking:"); the lookbehinds keep the label
+    # out of the span and stop every 7-digit number from being masked.
     PatternRecognizer(supported_entity="CASE_NUMBER",
-        patterns=[Pattern("case", r"\bPRB-\d{4}-\d{6}\b", 0.9)],
+        patterns=[Pattern("case", r"\bPRB[-\s]?\d{4}[-\s]\d{6}\b", 0.9),
+                  Pattern("case_labeled",
+                          r"(?:(?<=case\s#)|(?<=case#)|(?<=case\s)|(?<=docket\s))\d{4}-\d{6}\b", 0.8)],
         context=["case", "docket", "file"]),
     PatternRecognizer(supported_entity="BOOKING_ID",
-        patterns=[Pattern("booking", r"\bBK\d{7}\b", 0.9)],
+        patterns=[Pattern("booking", r"\bBK[-\s]?\d{7}\b", 0.9),
+                  Pattern("booking_labeled",
+                          r"(?:(?<=booking:\s)|(?<=booking\s)|(?<=booking#)|(?<=booking\s#))\d{7}\b", 0.8)],
         context=["booking"]),
     PatternRecognizer(supported_entity="PHONE_NUMBER", name="ExtendedPhoneRecognizer",
         patterns=[Pattern("us_phone_ext",
