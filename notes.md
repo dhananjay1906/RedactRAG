@@ -2,9 +2,9 @@
 
 ## Results (2026-11-12)
 
-Model: `claude-haiku-5-5`. Embeddings: `all-MiniLM-L6-v2` (384-dim). 10 policy docs, 140 chunks
-(500 chars, 100 overlap). 28 eval questions in `evals/cases.json`.
-Retrieval and accuracy were measured on the first 8 docs (116 chunks); retrieval re-checked at 10 docs, unchanged.
+Model: `claude-haiku-5-5`. Embeddings: `all-MiniLM-L6-v2` (384-dim). 10 policy docs, 179 chunks.
+Chunking: split on `##` sections, then 500 chars with 100 overlap inside each section; every chunk
+starts with `<doc title> > <section heading>`. 28 eval questions in `evals/cases.json`.
 
 ### PII detection, base vs. custom recognizers (`scripts/detection_report.py`, 100 synthetic records)
 
@@ -24,14 +24,16 @@ Over-masked policy phrases: 0 in both. Base missed phones with extensions (e.g. 
 
 ### Retrieval (`tests/test_retrieval.py`)
 
-| Metric | Score |
-|--------|-------|
-| hit@1  | 27/28 (96%) |
-| hit@3  | 27/28 (96%) |
+| Metric | Fixed 500-char chunks | Section-aware chunks |
+|--------|-----------------------|----------------------|
+| hit@1  | 27/28 (96%)           | 27/28 (96%)          |
+| hit@3  | 27/28 (96%)           | **28/28 (100%)**     |
 
-Miss: "What is the maximum number of hours per week an employee may work in approved outside employment?"
-Expected `code-of-conduct.md`; top 3 were `remote-work.md`, `remote-work.md`, `leave-and-sick-time.md`.
-The expected chunk is not in the top 8.
+Old miss: "What is the maximum number of hours per week an employee may work in approved outside employment?"
+With fixed chunks the expected `code-of-conduct.md` chunk was not in the top 8: the answer sentence
+never says "outside employment", only the `## Outside Employment` heading does, and the 500-char window
+cut the heading off. With the heading on every chunk it ranks 3rd (behind `remote-work.md` and
+`leave-and-sick-time.md`), so it is a hit@3 but still not a hit@1.
 
 ### End-to-end leak rate (`tests/test_leaks.py`, 148 prompts, no API calls)
 
@@ -56,7 +58,8 @@ NER-only miss rate on names like these is somewhere in that range, not 0.
 
 ### Accuracy (`tests/test_accuracy.py`, 28 Haiku calls)
 
-**27/28.** Only failure is the retrieval miss above; the agent answered "I don't know" instead of guessing.
+**28/28** with section-aware chunks. Was 27/28 with fixed chunks: the only failure was the retrieval
+miss above, and the agent answered "I don't know" instead of guessing.
 
 ## Bugs found
 
@@ -65,3 +68,5 @@ NER-only miss rate on names like these is somewhere in that range, not 0.
 - Found: the first deny-list loaded names from the leak test's own manifest, so the 0% was guaranteed.
   Moved the list to `config/staff_directory.json` and added 6 held-out names to measure NER alone.
 - Found: `.gitignore` excluded all of `data/`, so a fresh clone had no policy corpus. Now only `data/records/` is ignored.
+- Found: fixed-size chunks separated answers from their section headings. Chunking by `##` section
+  and prefixing the heading took hit@3 from 27/28 to 28/28 and accuracy from 27/28 to 28/28.
