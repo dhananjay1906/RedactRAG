@@ -55,7 +55,7 @@ Policy phrases wrongly masked (such as "48 hours"): 0 in both.
 
 | Check | Result |
 | --- | --- |
-| Leak rate, known PII (182 prompts) | 0.00% (was 20.95% before the staff-name fix) |
+| Leak rate, known PII (182 prompts) | 0.00% (was 20.95% of 148 prompts before the staff-name fix) |
 | Leak rate, names not in the staff directory (182 prompts) | 0.00% (was 1.65% before the Contacts-line rule) |
 | Retrieval, right document ranked first | 31/32 |
 | Answer accuracy with correct citation | 32/32 |
@@ -112,7 +112,7 @@ Staff contacts are masked the same way as client data, so "who do I contact abou
 
 ## Run it
 
-Requires Python 3.12, Docker and an Anthropic API key.
+Requires Python 3.12+ (CI runs 3.12; developed on 3.14), Docker and an Anthropic API key.
 
 ```bash
 git clone https://github.com/dhananjay1906/RedactRAG.git
