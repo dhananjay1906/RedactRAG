@@ -36,17 +36,44 @@ for d in random.sample(records, 30):
         f"For case {p['CASE_NUMBER']}, what is the drug test fee?",
         f"Email {p['EMAIL']} the records request fee.",
     ]
-QUESTIONS = [c["question"] for c in CASES] + PII_QUESTIONS
+# Fact questions never retrieve a "Contacts" section, so ask for contacts directly:
+# that is the realistic path for a staff name to reach the prompt.
+# Three phrasings per doc, because retrieval of the name-bearing chunk depends on wording.
+CONTACT_TEMPLATES = [
+    "Who do I contact about the {} policy?",
+    "Who is the contact person for {} questions, and what is their name and title?",
+    "Which staff member handles {} questions?",
+]
+CONTACT_QUESTIONS = [t.format(d.removesuffix(".md").replace("-", " "))
+                     for d in sorted({p["doc"] for p in policies}) for t in CONTACT_TEMPLATES]
+QUESTIONS = [c["question"] for c in CASES] + PII_QUESTIONS + CONTACT_QUESTIONS
 
-def test_leak_rate():
-    prompts = [prepare(q) for q in QUESTIONS]
-    leaks = [(q, [v for v in PLANTED if v in p])
-             for q, p in zip(QUESTIONS, prompts) if any(v in p for v in PLANTED)]
-    rate = len(leaks) / len(prompts)
-    print(f"\nLeak rate: {rate:.2%} ({len(leaks)}/{len(prompts)} prompts)")
-    for q, vals in leaks[:10]:
-        print("LEAK:", q, "->", vals)
-    assert rate == 0
+_PROMPTS = None
+
+def _prompts():
+    """Build every prompt once; both prompt-level tests reuse them."""
+    global _PROMPTS
+    if _PROMPTS is None:
+        _PROMPTS = [prepare(q) for q in QUESTIONS]
+    return _PROMPTS
+
+def _rate(values):
+    prompts = _prompts()
+    leaks = [(q, [v for v in values if v in p]) for q, p in zip(QUESTIONS, prompts)
+             if any(v in p for v in values)]
+    return len(leaks), len(prompts), leaks
+
+def test_known_pii_leak_rate():
+    n, total, leaks = _rate(PLANTED)
+    print(f"\nKnown PII leak rate: {n/total:.2%} ({n}/{total} prompts)")
+    for q, v in leaks[:10]: print("LEAK:", q, "->", v)
+    assert n == 0
+
+def test_unknown_name_leak_rate():
+    """Reported, not asserted: held-out names have only NER protecting them."""
+    n, total, leaks = _rate(HELD_OUT_NAMES)
+    print(f"\nUnknown-name leak rate (NER only): {n/total:.2%} ({n}/{total} prompts)")
+    for q, v in leaks[:10]: print("LEAK:", q, "->", v)
 
 def test_name_leak_rates():
     """Mask each policy doc and count which contact names survive."""
