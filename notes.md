@@ -13,3 +13,7 @@ Embeddings: `all-MiniLM-L6-v2` (384-dim). Chunks: 500 chars, 100 overlap. Cosine
 Miss: "What is the maximum number of hours per week an employee may work in approved outside employment?"
 Expected `code-of-conduct.md`; top 3 were `remote-work.md`, `remote-work.md`, `leave-and-sick-time.md`.
 The expected chunk is not in the top 8.
+
+## Bugs found
+
+- Found: Presidio skipped non-standard email domains; fixed with a custom recognizer.

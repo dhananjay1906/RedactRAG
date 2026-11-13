@@ -16,8 +16,9 @@ CUSTOM_RECOGNIZERS = [
         patterns=[Pattern("us_phone_ext",
             r"(?:\+?1[-.\s]?|001[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}(?:\s?(?:x|ext\.?)\s?\d{1,5})?", 0.7)],
         context=["phone", "contact", "reach", "call"]),
-    # TODO(human): add an EMAIL_ADDRESS PatternRecognizer that also catches
-    # addresses whose TLD is not real (e.g. ...@harborcounty-probation.example)
+    # Presidio's built-in email recognizer rejects non-real TLDs (e.g. .example)
+    PatternRecognizer(supported_entity="EMAIL_ADDRESS", name="AnyTldEmailRecognizer",
+        patterns=[Pattern("email_any_tld", r"\b[\w.+-]+@[\w-]+(?:\.[\w-]+)+\b", 0.8)]),
 ]
 
 nlp = NlpEngineProvider(nlp_configuration={
