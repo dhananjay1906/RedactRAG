@@ -61,5 +61,15 @@
   {"question": "How much is an employee charged for a lost laptop if the loss is due to carelessness?",
    "expected_doc": "equipment-and-it-security.md", "must_include": ["850"]},
   {"question": "For how many days are server backups kept?",
-   "expected_doc": "equipment-and-it-security.md", "must_include": ["35"]}
+   "expected_doc": "equipment-and-it-security.md", "must_include": ["35"]},
+
+  {"question": "How many dollars of unpaid fines does one hour of community service convert to?",
+   "expected_doc": "community-service.md", "must_include": ["15"]},
+  {"question": "What is the minimum liability insurance an approved community service site must carry?",
+   "expected_doc": "community-service.md", "must_include": ["500,000"]},
+
+  {"question": "How quickly must a registered victim be notified when a warrant is issued for the client?",
+   "expected_doc": "victim-notification.md", "must_include": ["24"]},
+  {"question": "Within how many working days must a registered victim update their contact information after a change?",
+   "expected_doc": "victim-notification.md", "must_include": ["10"]}
 ]
