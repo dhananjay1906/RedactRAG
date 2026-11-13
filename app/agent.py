@@ -49,6 +49,12 @@ def check_citations(s):
     retrieved = {c["doc"] for c in s["chunks"]}
     if not cited or not cited <= retrieved:
         return {"answer": "I don't know - no supporting source found.", "citations": []}
+    source_text = " ".join(c["content"] for c in s["chunks"] if c["doc"] in cited)
+    answer_text = re.sub(r"\[[\w\-]+\.md\]", "", s["answer"])
+    numbers = set(re.findall(r"\d+(?:\.\d+)?", answer_text))
+    unsupported = [n for n in numbers if n not in source_text]
+    if unsupported:
+        return {"answer": "I don't know - the sources don't support that answer.", "citations": []}
     return {"citations": sorted(cited)}
 
 g = StateGraph(State)

@@ -217,6 +217,26 @@ Questions where they differ: 0. Masking costs nothing on these questions, but no
 masked value to answer (they ask about fees, deadlines and limits). The real cost shows on contact
 questions (see the tradeoff below), which this eval set does not score.
 
+## Number check in `check_citations`
+
+Every number in the answer (digits only, citations stripped) must appear in the cited file's retrieved
+chunks, or the answer becomes "I don't know - the sources don't support that answer."
+Free tests: `tests/test_citations.py` (3). Accuracy after adding it: **32/32** (no real answer rejected).
+
+Probing the rule with source text "The fee is $12 per test. Results are kept for 120 days.":
+
+| Answer | Result | Correct? |
+|--------|--------|----------|
+| `$12.00` | rejected | false reject: `12.00` is not a substring |
+| `1,200 days` | rejected | false reject on formatting (here the value is also wrong) |
+| `$1`, `$2`, `$20` | **passed** | wrong: substring match finds them inside `12` / `120` |
+| `twelve dollars` | **passed** | words are not checked at all |
+
+Tradeoff: the substring test is loose enough to let wrong small numbers through and strict enough to
+reject harmless reformatting. A better version would match whole numbers (`\b12\b`), normalise
+`1,200` -> `1200` and `12.00` -> `12` on both sides, and optionally map number words to digits.
+Not changed yet; on the current 32 questions it costs nothing and catches invented numbers like `$50`.
+
 ## Known tradeoff: masked contacts can't be answered
 
 Seen in `assets/mcp-demo.png`: asked who to contact about a records request, the system answers
