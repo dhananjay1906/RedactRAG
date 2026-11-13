@@ -2,9 +2,9 @@
 
 ## Results (2026-11-12)
 
-Model: `claude-haiku-5-5`. Embeddings: `all-MiniLM-L6-v2` (384-dim). 10 policy docs, 179 chunks.
-Chunking: split on `##` sections, then 500 chars with 100 overlap inside each section; every chunk
-starts with `<doc title> > <section heading>`. 32 eval questions in `evals/cases.json`
+Model: `claude-haiku-5-5`. Embeddings: `all-MiniLM-L6-v2` (384-dim). 10 policy docs, 149 chunks.
+Chunking: split on `##` sections, then whole sentences packed up to ~500 chars with a one-sentence
+overlap and any tail under 100 chars merged back (no mid-word cuts); every chunk starts with `<doc title> > <section heading>`. 32 eval questions in `evals/cases.json`
 (28 on the original 8 docs, 4 on the 2 held-out docs).
 
 ### PII detection, base vs. custom recognizers (`scripts/detection_report.py`, 100 synthetic records)
@@ -104,10 +104,14 @@ phones and emails generalise; case numbers and booking IDs do not.
 
 ### Retrieval (`tests/test_retrieval.py`)
 
-| Metric | Fixed 500-char chunks (28 q) | Section-aware chunks (28 q) | Section-aware (32 q) |
-|--------|------------------------------|-----------------------------|----------------------|
-| hit@1  | 27/28 (96%)                  | 27/28 (96%)                 | 31/32 (97%)          |
-| hit@3  | 27/28 (96%)                  | **28/28 (100%)**            | **32/32 (100%)**     |
+| Metric | Fixed 500-char chunks (28 q) | Section-aware chunks (28 q) | Section-aware (32 q) | Sentence chunks (32 q) |
+|--------|------------------------------|-----------------------------|----------------------|------------------------|
+| hit@1  | 27/28 (96%)                  | 27/28 (96%)                 | 31/32 (97%)          | 31/32 (97%)            |
+| hit@3  | 27/28 (96%)                  | **28/28 (100%)**            | **32/32 (100%)**     | 31/32 (97%)            |
+
+Sentence chunks: the "outside employment" chunk is unchanged (distance 0.506) but drops from 3rd to 4th,
+because the remote-work Schedule section now yields two overlapping chunks that both score better
+(0.455, 0.499). The agent retrieves k=5, so accuracy stays 32/32. Leak rates unchanged at 0.
 
 Old miss: "What is the maximum number of hours per week an employee may work in approved outside employment?"
 With fixed chunks the expected `code-of-conduct.md` chunk was not in the top 8: the answer sentence
@@ -198,6 +202,24 @@ model, and both models score 100/100 on names in prose in `data/records`. `trf` 
 **32/32** with section-aware chunks (28 original + 4 held-out-doc questions). Was 27/28 with fixed
 chunks: the only failure was the retrieval miss above, and the agent answered "I don't know"
 instead of guessing.
+
+## Known tradeoff: masked contacts can't be answered
+
+Seen in `assets/mcp-demo.png`: asked who to contact about a records request, the system answers
+"I can't give you a name, phone number or email." The data is protected, but the question goes unanswered,
+because staff contacts are masked the same way as client PII.
+
+Two reasonable fixes:
+
+1. **Don't mask public staff contacts.** A published records-desk phone number is not private the way a
+   client's case number is. Mask clients; leave office contacts in the policy docs alone. Simple, but it
+   needs a reliable split between "public staff" and "private person", and a mistake leaks a person.
+2. **Unmask locally after Claude answers (reversible anonymization).** Number the placeholders
+   (`<PERSON_1>`, `<PHONE_NUMBER_1>`), keep the placeholder-to-value mapping on the local machine, and swap
+   the real values back into the final answer for authorized users. Claude never sees them; the user still
+   gets the contact. This is the stronger design (LangChain's reversible anonymizer works this way).
+
+Status: not implemented. Listed as future work.
 
 ## Bugs found
 

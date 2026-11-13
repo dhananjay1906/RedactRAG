@@ -9,8 +9,48 @@ from app.search import model, DB_URL
 
 SOURCE_DIRS = [Path("data/policies"), Path("docs")]
 
-def chunk(text: str, size: int = 500, overlap: int = 100) -> list[str]:
-    return [text[i:i + size] for i in range(0, len(text), size - overlap)]
+_SENT_END = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9<(\"'])")
+_ABBREV = ("e.g.", "i.e.", "a.m.", "p.m.", "No.", "Dr.", "Mr.", "Ms.", "Mrs.", "St.")
+
+def units(text: str) -> list[tuple[str, str]]:
+    """Split into (sentence, separator). Each line is split into sentences; separator is
+    ' ' between sentences on one line and '\\n' at a line end, so bullets stay intact."""
+    out = []
+    for line in (l.strip() for l in text.split("\n")):
+        if not line:
+            continue
+        parts = []
+        for p in _SENT_END.split(line):
+            if parts and parts[-1].endswith(_ABBREV):   # "Dr. <PERSON>" is one sentence
+                parts[-1] += " " + p
+            else:
+                parts.append(p)
+        out += [(p, " ") for p in parts[:-1]] + [(parts[-1], "\n")]
+    return out
+
+def _join(us: list[tuple[str, str]]) -> str:
+    return "".join(t + sep for t, sep in us).strip()
+
+def chunk(text: str, size: int = 500, min_tail: int = 100) -> list[str]:
+    """Pack whole sentences up to ~size chars, overlap one sentence, fold a short tail back."""
+    chunks: list[list[tuple[str, str]]] = []
+    cur: list[tuple[str, str]] = []
+    for u in units(text):
+        if not cur or len(_join(cur + [u])) <= size:
+            cur.append(u)
+            continue
+        only_overlap = bool(chunks) and len(cur) == 1 and cur[0] == chunks[-1][-1]
+        if not only_overlap:
+            chunks.append(cur)
+            cur = [cur[-1], u]                           # one-sentence overlap
+        else:
+            cur = [u]                                    # overlap + u won't fit: start fresh
+    if cur and not (chunks and len(cur) == 1 and cur[0] == chunks[-1][-1]):
+        chunks.append(cur)
+    if len(chunks) > 1 and len(_join(chunks[-1])) < min_tail:
+        tail = chunks.pop()
+        chunks[-1] += tail[1:] if tail[0] == chunks[-1][-1] else tail   # skip repeated overlap
+    return [_join(c) for c in chunks]
 
 def read_pages(path: Path) -> list[tuple[int, str]]:
     """Return (page_number, text). Markdown is one page; PDFs keep real page numbers."""
