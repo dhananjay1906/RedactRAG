@@ -45,7 +45,7 @@ When the client completes the full order, the officer confirms the total in the 
 Contact the Community Service Unit with questions about placement or timesheets. The case number below is a filing example used on Form CS-1 and is not tied to a real person.
 
 - **Benedikt Harrowgate-Mensah**, Community Service Coordinator. Phone: (555) 010-4862 ext. 22. Email: b.harrowgate-mensah@harborcounty-probation.example.
-- **Soledad Iturbe-Kowalczyk**, Work Site Liaison. Phone: 555.010.3197. Email: soledad.iturbe-kowalczyk@harborcounty-probation.example.
-- **Cornelius Afolabi-Strand**, Timesheet Clerk. Phone: +1-555-010-6528. Email: c.afolabi-strand@harborcounty-probation.example.
+- **Søren Ångström**, Work Site Liaison. Phone: 555.010.3197. Email: s.angstrom@harborcounty-probation.example.
+- **Cornelius Afolabi**, Timesheet Clerk. Phone: +1-555-010-6528. Email: c.afolabi@harborcounty-probation.example.
 
 Form CS-1 sample entry, case reference: PRB-2024-018864.

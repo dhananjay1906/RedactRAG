@@ -47,8 +47,8 @@ Registered victims may submit a written statement before any hearing on early te
 
 Contact the Victim Services Unit with questions about registration or notices. The case number below is a filing example used on Form VN-2 and is not tied to a real person.
 
-- **Philippa Nakamura-Ashby**, Victim Services Manager. Phone: (555) 010-7741. Email: p.nakamura-ashby@harborcounty-probation.example.
-- **Radomir Esterhazy-Coyle**, Victim Advocate. Phone: 555-010-2906 x41. Email: radomir.esterhazy-coyle@harborcounty-probation.example.
+- **Philippa Nakamura**, Victim Services Manager. Phone: (555) 010-7741. Email: p.nakamura@harborcounty-probation.example.
+- **Radomír Eszterházy**, Victim Advocate. Phone: 555-010-2906 x41. Email: r.eszterhazy@harborcounty-probation.example.
 - **Aurelia Mbeki-Lindgren**, Notification Specialist. Phone: 001-555-010-5375. Email: a.mbeki-lindgren@harborcounty-probation.example.
 
 Form VN-2 sample entry, case reference: PRB-2025-010472.

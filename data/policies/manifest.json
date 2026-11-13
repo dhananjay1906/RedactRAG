@@ -226,33 +226,33 @@
   {
     "doc": "community-service.md",
     "pii": {
-      "PERSON": "Soledad Iturbe-Kowalczyk",
+      "PERSON": "Søren Ångström",
       "PHONE": "555.010.3197",
-      "EMAIL": "soledad.iturbe-kowalczyk@harborcounty-probation.example"
+      "EMAIL": "s.angstrom@harborcounty-probation.example"
     }
   },
   {
     "doc": "community-service.md",
     "pii": {
-      "PERSON": "Cornelius Afolabi-Strand",
+      "PERSON": "Cornelius Afolabi",
       "PHONE": "+1-555-010-6528",
-      "EMAIL": "c.afolabi-strand@harborcounty-probation.example"
+      "EMAIL": "c.afolabi@harborcounty-probation.example"
     }
   },
   {
     "doc": "victim-notification.md",
     "pii": {
-      "PERSON": "Philippa Nakamura-Ashby",
+      "PERSON": "Philippa Nakamura",
       "PHONE": "(555) 010-7741",
-      "EMAIL": "p.nakamura-ashby@harborcounty-probation.example"
+      "EMAIL": "p.nakamura@harborcounty-probation.example"
     }
   },
   {
     "doc": "victim-notification.md",
     "pii": {
-      "PERSON": "Radomir Esterhazy-Coyle",
+      "PERSON": "Radomír Eszterházy",
       "PHONE": "555-010-2906 x41",
-      "EMAIL": "radomir.esterhazy-coyle@harborcounty-probation.example"
+      "EMAIL": "r.eszterhazy@harborcounty-probation.example"
     }
   },
   {
