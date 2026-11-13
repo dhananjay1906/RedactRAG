@@ -19,6 +19,33 @@ starts with `<doc title> > <section heading>`. 32 eval questions in `evals/cases
 
 Over-masked policy phrases: 0 in both. Base missed phones with extensions (e.g. `394.802.6542x351`).
 
+### Held-out ID formats (`scripts/make_holdout.py`, 30 docs, custom recognizers unchanged)
+
+`python -m scripts.detection_report --dir data/holdout`. Formats the regexes were not written for;
+names and emails use the usual formats as a control.
+
+| Type        | Correct (right label, full span) | Digits leaked |
+|-------------|----------------------------------|---------------|
+| PERSON      | 30/30                            | 0             |
+| PHONE       | 30/30                            | 0             |
+| EMAIL       | 30/30                            | 0             |
+| CASE_NUMBER | **10/30**                        | 0             |
+| BOOKING_ID  | **0/30**                         | **28/30**     |
+
+By format:
+
+| Format | Correct | Digits leaked | Notes |
+|--------|---------|---------------|-------|
+| `prb-2024-001234` | 10/10 | 0/10 | Presidio regexes are case-insensitive by default |
+| `PRB 2024 001234` | 0/10 | 0/10 | hidden only by luck: 10 digits match the phone regex |
+| `Case #2024-001234` | 0/10 | 0/10 | same luck: masked as `PHONE_NUMBER` |
+| `BK-1234567` | 0/15 | 13/15 | |
+| `Booking: 1234567` | 0/15 | 15/15 | |
+| `(213) 555 0199`, `213.555.0199 ext. 12`, `+1 213 555 0199` | 30/30 | 0/30 | phone regex already covered these |
+
+Takeaway: the in-distribution 100/100 for CASE_NUMBER and BOOKING_ID does not carry over to new formats.
+Case numbers only look safe because the phone rule over-matches; booking IDs leak almost every time.
+
 ### DB leak count
 
 `SELECT count(*) FROM chunks WHERE content ~ 'PRB-|@|BK[0-9]{7}'`: 14 before the email fix, **0** after.
